@@ -1,0 +1,184 @@
+-- CREATING MY DATABASE
+SET SQL_SAFE_UPDATES = 0;
+
+DROP DATABASE IF EXISTS restaurant;
+
+CREATE DATABASE restaurant;
+
+USE restaurant;
+
+CREATE TABLE employees (
+    employee_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    surname VARCHAR(50),
+    phone_number VARCHAR(9),
+    date_of_birth DATE,
+    employment_type VARCHAR(20)
+);
+
+CREATE TABLE menu_items (
+    item_id INT PRIMARY KEY,
+    dish_name VARCHAR(100),
+    vegetarian BOOLEAN,
+    vegan BOOLEAN,
+    price DECIMAL(8, 2)
+);
+
+CREATE TABLE reservations (
+    reservation_id INT PRIMARY KEY,
+    table_number INT,
+    number_of_people INT,
+    reservation_datetime DATETIME,
+    employee_id INT,
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+);
+
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    reservation_id INT,
+    item_id INT,
+    FOREIGN KEY (reservation_id) REFERENCES reservations(reservation_id),
+    FOREIGN KEY (item_id) REFERENCES menu_items(item_id)
+);
+
+INSERT INTO employees (employee_id, name, surname, phone_number, date_of_birth, employment_type) VALUES
+(1, 'John', 'Doe', '123456789', '1990-05-15', 'full-time'),
+(2, 'Jane', 'Smith', '987654321', '1985-10-20', 'full-time'),
+(3, 'Michael', 'Johnson', '555123456', '1992-03-12', 'part-time'),
+(4, 'Emily', 'Brown', '333888444', '1998-07-28', 'part-time'),
+(5, 'William', 'Davis', '777555111', '1989-11-02', 'full-time'),
+(6, 'Olivia', 'Wilson', '444222888', '1995-09-09', 'part-time'),
+(7, 'James', 'Martinez', '666999333', '1993-01-18', 'full-time'),
+(8, 'Sophia', 'Anderson', '222777555', '1997-12-05', 'part-time'),
+(9, 'Benjamin', 'Lopez', '888444222', '1994-06-30', 'full-time'),
+(10, 'Ava', 'Garcia', '111333777', '1991-08-25', 'part-time');
+
+INSERT INTO menu_items (item_id, dish_name, vegetarian, vegan, price) VALUES
+(1, 'Margherita Pizza', TRUE, FALSE, 12.99),
+(2, 'Penne Arrabbiata', TRUE, FALSE, 10.50),
+(3, 'Lasagna', FALSE, FALSE, 14.75),
+(4, 'Caprese Salad', TRUE, TRUE, 8.95),
+(5, 'Ravioli al Tartufo', FALSE, FALSE, 16.25),
+(6, 'Gnocchi Sorrentina', TRUE, FALSE, 11.50),
+(7, 'Spaghetti Carbonara', FALSE, FALSE, 12.75),
+(8, 'Eggplant Parmesan', TRUE, FALSE, 13.50),
+(9, 'Fettuccine Alfredo', FALSE, FALSE, 11.99),
+(10, 'Bruschetta', TRUE, TRUE, 7.25);
+
+INSERT INTO reservations (reservation_id, table_number, number_of_people, reservation_datetime, employee_id) VALUES
+(1, 5, 2, '2023-08-25 18:30:00', 3),
+(2, 8, 4, '2023-08-26 19:00:00', 1),
+(3, 3, 6, '2023-08-27 20:15:00', 2),
+(4, 2, 3, '2023-08-28 17:45:00', 4),
+(5, 6, 2, '2023-08-29 18:00:00', 3),
+(6, 1, 5, '2023-08-30 19:30:00', 1),
+(7, 4, 2, '2023-08-31 21:00:00', 2),
+(8, 7, 8, '2023-09-01 19:15:00', 4),
+(9, 5, 3, '2023-09-02 20:30:00', 3),
+(10, 3, 4, '2023-09-03 18:45:00', 1);
+
+INSERT INTO orders (order_id, reservation_id, item_id) VALUES
+(1, 1, 9),
+(2, 1, 4),
+(3, 1, 5),
+(4, 2, 1),
+(5, 2, 6),
+(6, 2, 10),
+(7, 3, 2),
+(8, 3, 8),
+(9, 3, 4),
+(10, 3, 9),
+(11, 4, 3),
+(12, 4, 7),
+(13, 5, 10),
+(14, 6, 1),
+(15, 6, 5),
+(16, 7, 6),
+(17, 7, 8),
+(18, 8, 2),
+(19, 8, 4),
+(20, 8, 9),
+(21, 8, 10),
+(22, 9, 3),
+(23, 9, 5),
+(24, 10, 1),
+(25, 10, 7);
+
+-- EXERCISES
+USE restaurant;
+
+-- Easy:
+-- Retrieve the names of all employees.
+SELECT name FROM employees;
+-- Get the dish names and prices of all vegetarian dishes.
+SELECT dish_name, price FROM menu_items
+WHERE vegetarian = TRUE;
+-- Count the number of reservations made by each employee.
+SELECT employee_id, COUNT(reservation_id) as no_reservations FROM reservations
+GROUP BY reservations.employee_id
+ORDER BY no_reservations DESC;
+-- Find the total number of people across all reservations.
+SELECT SUM(number_of_people) as total_no_people FROM reservations;
+-- List the reservation IDs, table numbers, and reservation datetimes for reservations made on or after '2023-08-30'.
+SELECT reservation_id, table_number, reservation_datetime FROM reservations
+WHERE reservation_datetime > '2023-08-30';
+
+-- Medium:
+-- Calculate the average price of non-vegetarian dishes.
+SELECT AVG(price) FROM menu_items
+WHERE vegetarian = FALSE AND VEGAN = FALSE;
+-- Find the employee names and the number of reservations they handled.
+SELECT name, surname, COUNT(reservation_id) no_reservations FROM reservations
+NATURAL JOIN employees
+GROUP BY reservations.employee_id
+ORDER BY no_reservations DESC;
+-- Retrieve the dish names that are both vegan and vegetarian.
+SELECT dish_name FROM menu_items
+WHERE vegetarian = TRUE AND vegan = TRUE;
+-- List the reservation IDs, employee names, and reservation datetimes for reservations made by full-time employees.
+SELECT reservation_id, name, surname, reservation_datetime from reservations
+INNER JOIN employees ON employees.employee_id = reservations.employee_id
+WHERE employment_type = "full-time";
+-- Calculate the total revenue generated from all reservations.
+SELECT reservation_id, sum(price) "total($)" FROM orders
+INNER JOIN menu_items ON orders.item_id = menu_items.item_id
+GROUP BY reservation_id 
+ORDER BY reservation_id ASC;
+-- 
+SELECT sum(price) "total($)" FROM orders
+INNER JOIN menu_items ON orders.item_id = menu_items.item_id;
+
+-- Hard:
+-- Retrieve the employee names and their average number of reservations per month.
+SELECT e.name, e.surname, r.employee_id, ROUND(AVG(avg_of_res_09), 1) AS average_res
+FROM (
+    SELECT employee_id, COUNT(reservation_id) as avg_of_res_09
+    FROM reservations
+    WHERE reservation_datetime BETWEEN '2023-09-01' AND '2023-09-30'
+    GROUP BY employee_id) AS r
+LEFT JOIN employees e ON r.employee_id = e.employee_id
+GROUP BY r.employee_id;
+
+-- Find the dish names that have been ordered at least twice.
+SELECT m.dish_name, COUNT(o.order_id) num_of_orders FROM orders o
+NATURAL JOIN menu_items m
+GROUP BY o.item_id
+HAVING num_of_orders >= 2
+ORDER BY num_of_orders DESC; 
+
+-- Calculate the employee with the highest and lowest total number of reservations.
+SELECT e.name, e.surname, COUNT(r.reservation_id) as no_of_res from employees as e
+INNER JOIN reservations r ON e.employee_id = r.employee_id
+GROUP BY r.employee_id
+ORDER BY no_of_res desc LIMIT 1;
+--
+SELECT e.name, e.surname, COUNT(r.reservation_id) as no_of_res from employees as e
+INNER JOIN reservations r ON e.employee_id = r.employee_id
+GROUP BY r.employee_id
+ORDER BY no_of_res LIMIT 1;
+
+-- List the dish names along with the number of times they have been ordered, sorted by the number of orders in descending order.
+SELECT m.dish_name, COUNT(o.order_id) as no_of_orders from menu_items as m
+INNER JOIN orders as o ON m.item_id = o.item_id
+GROUP BY o.item_id
+ORDER BY no_of_orders DESC;
